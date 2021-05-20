@@ -17,16 +17,26 @@ namespace RabbitMQ.subscriber
 
             using var connection = connectionFactory.CreateConnection();
 
-            var model = connection.CreateModel();
+            var channel = connection.CreateModel();
 
-            var helloQueue = "hello-queue";
+            var randomQueueName = "log-database-save-queue";
+
+            //durable true; fiziksel olarak sabit bir diske kaydedilsin
+            //exclusive false; başka kanallardan bu kuyruğa bağlanılsın mı
+
+            channel.QueueDeclare(randomQueueName, true, false, false);
+
+            channel.QueueBind(randomQueueName, "logs-fanout", "", null);
+
             //model.QueueDeclare(helloQueue, true, false, false);
             //global true; subscriberlara toplamda kaça bölüneceğini belirtir
-            model.BasicQos(0, 1, false);
+            channel.BasicQos(0, 1, false);
 
-            var consumer = new EventingBasicConsumer(model);
+            var consumer = new EventingBasicConsumer(channel);
             //autoAck = kuyruktan bir mesajı gönderildiğinde direk siliyor, false işleminde haberleşme bittikten sonra kontrolllü silinmeyi sağlar
-            model.BasicConsume(helloQueue, false, consumer);
+            channel.BasicConsume(randomQueueName, false, consumer);
+
+            Console.WriteLine("Loglar dinleniyor...");
 
             consumer.Received += (sender, eventArgs) =>
             {
@@ -34,7 +44,7 @@ namespace RabbitMQ.subscriber
                 Thread.Sleep(1500);
                 Console.WriteLine("Gelen Mesaj: " + message);
 
-                model.BasicAck(eventArgs.DeliveryTag, false);
+                channel.BasicAck(eventArgs.DeliveryTag, false);
             };
             Console.ReadLine();
         }

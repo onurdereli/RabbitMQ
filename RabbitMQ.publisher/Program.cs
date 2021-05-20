@@ -18,19 +18,19 @@ namespace RabbitMQ.publisher
 
             using var connection = connectionFactory.CreateConnection();
 
-            var model = connection.CreateModel();
+            var channel = connection.CreateModel();
 
-            var helloQueue = "hello-queue";
+            var logsFanout = "logs-fanout";
 
-            model.QueueDeclare(helloQueue, true, false, false);
-
+            channel.ExchangeDeclare(logsFanout, durable: true, type: ExchangeType.Fanout);
+            
             Enumerable.Range(1, 50).ToList().ForEach(x =>
             {
                 // mesajlar byte dizin olarak alınır
                 string message = $"Message {x}";
                 var messageBody = Encoding.UTF8.GetBytes(message);
 
-                model.BasicPublish(string.Empty, helloQueue, null, messageBody);
+                channel.BasicPublish(logsFanout, "", null, messageBody);
 
                 Console.WriteLine($"Mesaj gönderilmiştir. {message}");
             });
