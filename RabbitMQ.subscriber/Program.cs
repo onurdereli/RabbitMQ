@@ -19,12 +19,7 @@ namespace RabbitMQ.subscriber
 
             var channel = connection.CreateModel();
 
-            var randomQueueName = "log-database-save-queue";
-
-            //durable true; fiziksel olarak sabit bir diske kaydedilsin
-            //exclusive false; başka kanallardan bu kuyruğa bağlanılsın mı
-
-            channel.QueueDeclare(randomQueueName, true, false, false);
+            var randomQueueName = channel.QueueDeclare().QueueName;
 
             channel.QueueBind(randomQueueName, "logs-fanout", "", null);
 
